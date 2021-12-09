@@ -1,7 +1,13 @@
 use crate::prelude::{complete::*, *};
 use std::convert::{TryFrom, TryInto};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(not(feature = "serde1"), derive(Debug))]
+#[cfg_attr(
+    feature = "serde1",
+    skip_serializing_none,
+    derive(Serialize, Deserialize, SerDebug)
+)]
 #[repr(u8)]
 #[allow(non_camel_case_types)]
 pub enum MapObjectType {
