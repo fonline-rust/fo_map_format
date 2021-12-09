@@ -3,9 +3,7 @@ mod objects;
 mod prelude;
 mod tiles;
 
-pub use crate::{
-    objects::{Object, MapObjectType},
-};
+pub use crate::objects::{MapObjectType, Object};
 
 use crate::{
     header::{header, Header},
@@ -25,7 +23,9 @@ pub struct Map<'a> {
     pub objects: Objects<'a>,
 }
 
-pub fn root<'a, E: ParseError<&'a str>>(settings: MapParserSettings) -> impl Fn(&'a str) -> IResult<&'a str, Map<'a>, E> {
+pub fn root<'a, E: ParseError<&'a str>>(
+    settings: MapParserSettings,
+) -> impl Fn(&'a str) -> IResult<&'a str, Map<'a>, E> {
     move |i| {
         let (i, (header, _, tiles, _, objects, _)) = tuple((
             header,
@@ -55,7 +55,11 @@ pub struct MapParserSettings {
     pub allow_any: bool,
 }
 
-pub fn verbose_read_file<P: AsRef<std::path::Path>, O, F>(path: P, mut fun: F, settings: MapParserSettings) -> Result<O, Error>
+pub fn verbose_read_file<P: AsRef<std::path::Path>, O, F>(
+    path: P,
+    mut fun: F,
+    settings: MapParserSettings,
+) -> Result<O, Error>
 where
     F: for<'a> FnMut(&'a str, IResult<&'a str, Map<'a>, nom::error::VerboseError<&'a str>>) -> O,
 {
@@ -201,11 +205,15 @@ mod tests {
     }*/
     #[test]
     fn parse_q3_test() {
-        verbose_read_file("../../../FO4RP/maps/q3_test.fomap", |_text, res| {
-            let (rest, _map) = res.unwrap();
-            show_rest(rest);
-            assert!(rest.is_empty());
-        }, Default::default())
+        verbose_read_file(
+            "../../../FO4RP/maps/q3_test.fomap",
+            |_text, res| {
+                let (rest, _map) = res.unwrap();
+                show_rest(rest);
+                assert!(rest.is_empty());
+            },
+            Default::default(),
+        )
         .expect("Can't read map file");
     }
     #[test]
@@ -219,11 +227,15 @@ mod tests {
                 continue;
             }
             println!("Parsing {:?}", file);
-            verbose_read_file(file, |text, res| {
-                let (rest, _map) = nom_err_to_string(text, res).expect("Can't parse map file");
-                show_rest(rest);
-                assert!(rest.is_empty());
-            }, Default::default())
+            verbose_read_file(
+                file,
+                |text, res| {
+                    let (rest, _map) = nom_err_to_string(text, res).expect("Can't parse map file");
+                    show_rest(rest);
+                    assert!(rest.is_empty());
+                },
+                Default::default(),
+            )
             .expect("Can't read map file");
         }
     }
