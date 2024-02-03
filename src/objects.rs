@@ -78,7 +78,7 @@ pub fn parse_relations<'a, E: ParseError<&'a str>>(i: &'a str) -> IResult<&'a st
     derive(Serialize, Deserialize, SerDebug)
 )]
 pub struct Light {
-    pub color: Option<i32>,
+    pub color: Option<u32>,
     pub day: Option<u8>,
     pub dir_off: Option<u8>,
     pub distance: Option<u8>,

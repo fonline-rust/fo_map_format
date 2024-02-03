@@ -3,7 +3,10 @@ mod objects;
 mod prelude;
 mod tiles;
 
-pub use crate::objects::{MapObjectType, Object};
+pub use crate::{
+    objects::{MapObjectType, Object, Kind},
+    tiles::Tile,
+};
 
 use crate::{
     header::{header, Header},
@@ -48,11 +51,32 @@ pub fn root<'a, E: ParseError<&'a str>>(
 pub enum Error {
     Io(std::io::Error),
     Utf8(std::str::Utf8Error),
+    NomFormatted(String),
+    Leftover(String),
+}
+
+impl Error {
+    fn leftover(rest: &str) -> Self {
+        Self::Leftover(rest.chars().take(120).collect())
+    }
 }
 
 #[derive(Default)]
 pub struct MapParserSettings {
     pub allow_any: bool,
+}
+
+pub fn map(
+    text: &str,
+    settings: MapParserSettings,
+) -> Result<Map, Error> {
+    let res = root(settings)(&text);
+    let (rest, map) = nom_err_to_string(text, res).map_err(Error::NomFormatted)?;
+    if !rest.is_empty() {
+        Err(Error::leftover(rest))
+    } else {
+        Ok(map)
+    }
 }
 
 pub fn verbose_read_file<P: AsRef<std::path::Path>, O, F>(
