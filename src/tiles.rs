@@ -1,11 +1,12 @@
-use crate::prelude::{complete::*, *};
-use crc::crc32::checksum_ieee as crc32;
 use std::cell::RefCell;
-
-#[cfg(feature = "hashbrown")]
-use hashbrown::HashMap;
 #[cfg(not(feature = "hashbrown"))]
 use std::collections::HashMap;
+
+use crc::crc32::checksum_ieee as crc32;
+#[cfg(feature = "hashbrown")]
+use hashbrown::HashMap;
+
+use crate::prelude::{complete::*, *};
 
 #[cfg(feature = "nohash-hasher")]
 type HashMapU32<T> = HashMap<u32, T, nohash_hasher::BuildNoHashHasher<u32>>;
@@ -61,7 +62,7 @@ fn tile<'a: 'b, 'b, E: ParseError<&'a str>>(
         } else {
             //let conventional_path = path.to_lowercase();
             //let conventional_path = conventional_path.replace('\\', "/");
-            let conventional_path = make_path_conventional(path);
+            let conventional_path = fformat_utils::make_path_conventional(path);
             let hash = crc32(conventional_path.as_bytes());
             dict.to_hash.insert(path.to_string(), hash);
             if let Some(first) = dict.to_path.insert(hash, conventional_path) {
@@ -96,6 +97,14 @@ pub fn tiles<'a, E: ParseError<&'a str>>(i: &'a str) -> IResult<&'a str, Tiles<'
     Ok((i, Tiles(tiles, dict.into_inner())))
 }
 
+impl crate::Offset for Tile<'_> {
+    fn offset(&self) -> (i32, i32) {
+        self.offset
+            .map(|(x, y)| (x as i32, y as i32))
+            .unwrap_or((0, 0))
+    }
+}
+
 #[cfg(test)]
 mod test {
     //[16:860] Script callback: qwerty - 55151997 : main : void init() : 424, 2 : FOServer::InitReal : Game.
@@ -119,12 +128,4 @@ mod test {
         //assert_eq!(crc::crc32::checksum_ieee(b"123456"), 158520161);
         //assert_eq!(crc::crc32::checksum_ieee(b"!@#$%^"), 3424808321);
     }*/
-}
-
-impl crate::Offset for Tile<'_> {
-    fn offset(&self) -> (i32, i32) {
-        self.offset
-            .map(|(x, y)| (x as i32, y as i32))
-            .unwrap_or((0, 0))
-    }
 }

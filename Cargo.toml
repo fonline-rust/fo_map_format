@@ -1,13 +1,14 @@
 [package]
 name = "fo_map_format"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["qthree <qthree3@gmail.com>"]
-edition = "2018"
+edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 nom_prelude = { git = "https://github.com/fonline-rust/format_extras.git" }
+fformat_utils = { git = "https://github.com/fonline-rust/format_extras.git" }
 crc = "1.8"
 hashbrown = { version = "0.9", optional = true }
 nohash-hasher = { version = "0.2", optional = true }

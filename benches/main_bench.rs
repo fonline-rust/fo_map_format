@@ -1,9 +1,11 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use fo_map_format::{root, Map};
 use std::time::Duration;
 
+use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use fo_map_format::{root, Map};
+use nom_prelude::nom;
+
 fn parse_map(text: &str) -> Map {
-    root::<nom::error::VerboseError<&str>>(text)
+    root::<nom::error::VerboseError<&str>>(Default::default())(text)
         .expect("Can't parse map")
         .1
 }

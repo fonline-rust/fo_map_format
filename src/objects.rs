@@ -1,5 +1,6 @@
-use crate::prelude::{complete::*, *};
 use std::convert::{TryFrom, TryInto};
+
+use crate::prelude::{complete::*, *};
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(not(feature = "serde1"), derive(Debug))]
@@ -17,6 +18,7 @@ pub enum MapObjectType {
 }
 impl TryFrom<u8> for MapObjectType {
     type Error = &'static str;
+
     fn try_from(from: u8) -> Result<Self, &'static str> {
         use MapObjectType::*;
         Ok(match from {
@@ -29,6 +31,7 @@ impl TryFrom<u8> for MapObjectType {
 }
 impl FromStr for MapObjectType {
     type Err = &'static str;
+
     fn from_str(from: &str) -> Result<Self, &'static str> {
         u8::from_str(from)
             .map_err(|_| "Parse int error")?
@@ -275,9 +278,11 @@ impl Kind<'_> {
             Any { ty, .. } => *ty,
         }
     }
+
     pub fn is_any(&self) -> bool {
         matches!(self, &Kind::Any { .. })
     }
+
     pub fn anim(&self) -> Option<&Anim> {
         use Kind::*;
         match self {
@@ -407,11 +412,7 @@ pub struct Object<'a> {
 
 impl<'a> Object<'a> {
     pub fn is_scenery(&self) -> bool {
-        if let Kind::Scenery { .. } = self.kind {
-            true
-        } else {
-            false
-        }
+        matches!(self.kind, Kind::Scenery { .. })
     }
 }
 

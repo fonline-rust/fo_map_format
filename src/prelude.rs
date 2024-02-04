@@ -1,5 +1,4 @@
 pub use nom_prelude::*;
-
 #[cfg(feature = "serde1")]
 pub use {
     serde::{Deserialize, Serialize},

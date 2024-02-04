@@ -3,16 +3,15 @@ mod objects;
 mod prelude;
 mod tiles;
 
-pub use crate::{
-    objects::{MapObjectType, Object, Kind},
-    tiles::Tile,
-};
-
 use crate::{
     header::{header, Header},
     objects::{objects, Objects},
     prelude::{complete::*, *},
     tiles::{tiles, Tiles},
+};
+pub use crate::{
+    objects::{Kind, MapObjectType, Object},
+    tiles::Tile,
 };
 
 #[cfg_attr(not(feature = "serde1"), derive(Debug))]
@@ -64,13 +63,11 @@ impl Error {
 #[derive(Default)]
 pub struct MapParserSettings {
     pub allow_any: bool,
+    pub allow_tail: bool,
 }
 
-pub fn map(
-    text: &str,
-    settings: MapParserSettings,
-) -> Result<Map, Error> {
-    let res = root(settings)(&text);
+pub fn map(text: &str, settings: MapParserSettings) -> Result<Map, Error> {
+    let res = root(settings)(text);
     let (rest, map) = nom_err_to_string(text, res).map_err(Error::NomFormatted)?;
     if !rest.is_empty() {
         Err(Error::leftover(rest))
@@ -81,16 +78,35 @@ pub fn map(
 
 pub fn verbose_read_file<P: AsRef<std::path::Path>, O, F>(
     path: P,
-    mut fun: F,
     settings: MapParserSettings,
+    mut fun: F,
 ) -> Result<O, Error>
 where
     F: for<'a> FnMut(&'a str, IResult<&'a str, Map<'a>, nom::error::VerboseError<&'a str>>) -> O,
 {
     let bytes = std::fs::read(path).map_err(Error::Io)?;
     let text = std::str::from_utf8(&bytes).map_err(Error::Utf8)?;
-    let res = root(settings)(&text);
-    Ok(fun(&text, res))
+    let res = root(settings)(text);
+    Ok(fun(text, res))
+}
+
+pub fn read_map_from_file<O>(
+    path: impl AsRef<std::path::Path>,
+    settings: MapParserSettings,
+    mut fun: impl FnMut(Map) -> O,
+) -> Result<O, Error> {
+    let allow_tail = settings.allow_tail;
+    verbose_read_file(path, settings, |text, res| {
+        let (rest, map) = nom_prelude::nom_err_to_string(text, res).map_err(Error::NomFormatted)?;
+        if !allow_tail && !rest.is_empty() {
+            return Err(Error::leftover(rest));
+        }
+        Ok(fun(map))
+    })?
+}
+
+pub trait Offset {
+    fn offset(&self) -> (i32, i32);
 }
 
 #[cfg(test)]
@@ -231,12 +247,12 @@ mod tests {
     fn parse_q3_test() {
         verbose_read_file(
             "../../../FO4RP/maps/q3_test.fomap",
+            Default::default(),
             |_text, res| {
                 let (rest, _map) = res.unwrap();
                 show_rest(rest);
                 assert!(rest.is_empty());
             },
-            Default::default(),
         )
         .expect("Can't read map file");
     }
@@ -251,20 +267,12 @@ mod tests {
                 continue;
             }
             println!("Parsing {:?}", file);
-            verbose_read_file(
-                file,
-                |text, res| {
-                    let (rest, _map) = nom_err_to_string(text, res).expect("Can't parse map file");
-                    show_rest(rest);
-                    assert!(rest.is_empty());
-                },
-                Default::default(),
-            )
+            verbose_read_file(file, Default::default(), |text, res| {
+                let (rest, _map) = nom_err_to_string(text, res).expect("Can't parse map file");
+                show_rest(rest);
+                assert!(rest.is_empty());
+            })
             .expect("Can't read map file");
         }
     }
-}
-
-pub trait Offset {
-    fn offset(&self) -> (i32, i32);
 }
